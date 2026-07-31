@@ -51,7 +51,7 @@ class Subnet
 
     static void DisplayTableHead()
     {
-        // One dash for each wall, to spaces for each element, 10 characters for five elements and 36 for the sixth
+        // One dash for each wall, to spaces for each element, 10 characters for five elements and 35 for the sixth
         Console.WriteLine("--------------------------------------------------------------------------------------------------------");
         Console.WriteLine("| Subnet ID  | Host ID    | Subnet per | Hosts per  | Subnet mask                         | CIDR       |");
         Console.WriteLine("| bits       | bits       | network    | network    |                                     |            |");
@@ -91,9 +91,7 @@ class Subnet
 
         int i = 0;
         for (; i < cidrVal / 8; ++i)
-        {
             octets[i] = "255";
-        }
 
         int remainingBits = cidrVal % 8;
         for (; i < 4; ++i)
@@ -116,22 +114,18 @@ class Subnet
     {
         int sum = 0;
         while (numberOfOnesFromLeft > 0)
-        {
-            sum += (int)Math.Pow(2, 8 - numberOfOnesFromLeft);
-            --numberOfOnesFromLeft;
-        }
+            sum += (int)Math.Pow(2, 8 - numberOfOnesFromLeft--);
+
         return sum;
     }
 
     static string GetSubnetMaskBinary(int cidrVal)
     {
-
         char[] subnetMask = new char[35];
 
         int onesCounter = 0;
         for (int i = 0; i < 35; ++i)
         {
-
             if (i == 8 || i == 17 || i == 26)
             {
                 subnetMask[i] = '.';
@@ -148,6 +142,5 @@ class Subnet
             }
         }
         return new string(subnetMask);
-
     }
 }
