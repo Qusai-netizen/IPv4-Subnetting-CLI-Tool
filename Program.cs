@@ -21,29 +21,25 @@ class Subnet
 
     }
 
-    static void DisplayClassSubnetsInfo(netClass cl, string _cidr = "")
+    static void DisplayClassSubnetsInfo(netClass cl, int _cidr = 0)
     {
-        string cidr = _cidr;
+        int cidr = _cidr;
 
-        if (cidr == "")
+        if (cidr == 0)
         {
+            DisplayTableHead();
             cidr = cl switch
             {
-                netClass.A => "/8",
-                netClass.B => "/16",
-                netClass.C => "/24",
-                _ => "/32"
+                netClass.A => 8,
+                netClass.B => 16,
+                netClass.C => 24,
+                _ => 32
             };
         }
-        else if (cidr == "/33")
+        else if (cidr == 33)
         {
             Console.Write("\n\n\n");
             return;
-        }
-
-        if (_cidr == "")
-        {
-            DisplayTableHead();
         }
 
         DisplayRow(
@@ -52,38 +48,30 @@ class Subnet
             GetSubnetsPerNetwork(GetSubnetIDBits(cl, cidr)),
             GetHostsPerNetwork(GetHostIDBits(cidr)),
             GetSubnetMaskDotted(cidr),
-            cidr
+            GetSubnetMaskBinary(cidr),
+            "/" + cidr
         );
 
-        string nextCidr = "/" + (int.Parse(cidr.Replace("/", "").Trim()) + 1);
-        DisplayClassSubnetsInfo(cl, nextCidr);
+        DisplayClassSubnetsInfo(cl, cidr + 1);
     }
 
     static void DisplayTableHead()
     {
-        // One dash for each wall, to spaces for each element, 10 characters for five elements and 25 for the sixth
-        Console.WriteLine("----------------------------------------------------------------------------------------------");
-        Console.WriteLine("| Subnet ID  | Host ID    | Subnet per | Hosts per  | Subnet mask               | CIDR       |");
-        Console.WriteLine("| bits       | bits       | network    | network    |                           |            |");
-        Console.WriteLine("----------------------------------------------------------------------------------------------");
+        // One dash for each wall, to spaces for each element, 10 characters for five elements and 36 for the sixth
+        Console.WriteLine("--------------------------------------------------------------------------------------------------------");
+        Console.WriteLine("| Subnet ID  | Host ID    | Subnet per | Hosts per  | Subnet mask                         | CIDR       |");
+        Console.WriteLine("| bits       | bits       | network    | network    |                                     |            |");
+        Console.WriteLine("--------------------------------------------------------------------------------------------------------");
     }
 
-    static void DisplayRow(int subnetIDBits, int hostIDBits, int subnetsPerNetork, int hostsPerNetwork, string subnetMaskDotted, string cidr)
+    static void DisplayRow(int subnetIDBits, int hostIDBits, int subnetsPerNetork, int hostsPerNetwork, string subnetMaskDotted, string subnetMaskBinary, string cidr)
     {
-        Console.WriteLine($"| {subnetIDBits,-10} | {hostIDBits,-10} | {subnetsPerNetork,-10} | {hostsPerNetwork,-10} | {subnetMaskDotted,-25} | {cidr,-10} |");
-        Console.WriteLine($"|            |            |            |            | {"working on it",-25} |            |");
-        Console.WriteLine("----------------------------------------------------------------------------------------------");
+        Console.WriteLine($"| {subnetIDBits,-10} | {hostIDBits,-10} | {subnetsPerNetork,-10} | {hostsPerNetwork,-10} | {subnetMaskDotted,-35} | {cidr,-10} |");
+        Console.WriteLine($"|            |            |            |            | {subnetMaskBinary,-35} |            |");
+        Console.WriteLine("--------------------------------------------------------------------------------------------------------");
     }
-
-    static int GetSubnetIDBits(netClass cl, string cidr)
+    static int GetSubnetIDBits(netClass cl, int cidrVal)
     {
-        string bits = cidr.Remove(0, 1);
-        int cidrNetworkBits;
-
-        bool success = int.TryParse(bits, out cidrNetworkBits);
-
-        if (success)
-        {
             int networkBits = cl switch
             {
                 netClass.A => 8,
@@ -92,29 +80,12 @@ class Subnet
                 _ => 24
             };
 
-            return cidrNetworkBits - networkBits;
-        }
-        else
-        {
-            return -1;
-        }
+            return cidrVal - networkBits;
     }
 
-    static int GetHostIDBits(string cidr)
+    static int GetHostIDBits(int cidrVal)
     {
-        string bits = cidr.Remove(0, 1);
-        int cidrNetworkBits;
-
-        bool success = int.TryParse(bits, out cidrNetworkBits);
-
-        if (success)
-        {
-            return 32 - cidrNetworkBits;
-        }
-        else
-        {
-            return -1;
-        }
+        return 32 - cidrVal;
     }
 
     static int GetSubnetsPerNetwork(int subnetIDBits)
@@ -127,43 +98,31 @@ class Subnet
         return (int)Math.Pow(2, hostIDBits) - 2;
     }
 
-    static string GetSubnetMaskDotted(string cidr)
+    static string GetSubnetMaskDotted(int cidrVal)
     {
-        string bits = cidr.Remove(0, 1);
-        int cidrNetworkBits;
+        string[] octets = new string[4];
 
-        bool success = int.TryParse(bits, out cidrNetworkBits);
-
-        if (success)
+        int i = 0;
+        for (; i < cidrVal / 8; ++i)
         {
-            string[] octets = new string[4];
-
-            int i = 0;
-            for (; i < cidrNetworkBits / 8; ++i)
-            {
-                octets[i] = "255";
-            }
-
-            int remainingBits = cidrNetworkBits % 8;
-            for (; i < 4; ++i)
-            {
-                if (remainingBits == 0)
-                {
-                    octets[i] = "0";
-                }
-                else
-                {
-                    octets[i] = BinaryToDecimal8Bits(remainingBits).ToString();
-                    remainingBits = 0;
-                }
-            }
-
-            return $"{octets[0]}.{octets[1]}.{octets[2]}.{octets[3]}";
+            octets[i] = "255";
         }
-        else
+
+        int remainingBits = cidrVal % 8;
+        for (; i < 4; ++i)
         {
-            return "failed";
+            if (remainingBits == 0)
+            {
+                octets[i] = "0";
+            }
+            else
+            {
+                octets[i] = BinaryToDecimal8Bits(remainingBits).ToString();
+                remainingBits = 0;
+            }
         }
+
+        return $"{octets[0]}.{octets[1]}.{octets[2]}.{octets[3]}";
     }
 
     static int BinaryToDecimal8Bits(int numberOfOnesFromLeft)
@@ -175,5 +134,33 @@ class Subnet
             --numberOfOnesFromLeft;
         }
         return sum;
+    }
+
+    static string GetSubnetMaskBinary(int cidrVal)
+    {
+
+        char[] subnetMask = new char[36];
+
+        int onesCounter = 0;
+        for (int i = 0; i < 35; ++i)
+        {
+
+            if (i == 8 || i == 17 || i == 26)
+            {
+                subnetMask[i] = '.';
+                continue;
+            }
+            if (onesCounter < cidrVal)
+            {
+                ++onesCounter;
+                subnetMask[i] = '1';
+            }
+            else
+            {
+                subnetMask[i] = '0';
+            }
+        }
+        return new string(subnetMask);
+
     }
 }
