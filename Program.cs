@@ -1,8 +1,8 @@
 ﻿enum netClass
 {
-    A,
-    B,
-    C
+    A = 8,
+    B = 16,
+    C = 24
 }
 
 class Subnet
@@ -28,13 +28,7 @@ class Subnet
         if (cidr == 0)
         {
             DisplayTableHead();
-            cidr = cl switch
-            {
-                netClass.A => 8,
-                netClass.B => 16,
-                netClass.C => 24,
-                _ => 32
-            };
+            cidr = (int)cl;
         }
         else if (cidr == 33)
         {
@@ -70,17 +64,10 @@ class Subnet
         Console.WriteLine($"|            |            |            |            | {subnetMaskBinary,-35} |            |");
         Console.WriteLine("--------------------------------------------------------------------------------------------------------");
     }
+
     static int GetSubnetIDBits(netClass cl, int cidrVal)
     {
-            int networkBits = cl switch
-            {
-                netClass.A => 8,
-                netClass.B => 16,
-                netClass.C => 24,
-                _ => 24
-            };
-
-            return cidrVal - networkBits;
+        return cidrVal - (int)cl; // CIDR vlue - the number of network bits in the class
     }
 
     static int GetHostIDBits(int cidrVal)
@@ -139,7 +126,7 @@ class Subnet
     static string GetSubnetMaskBinary(int cidrVal)
     {
 
-        char[] subnetMask = new char[36];
+        char[] subnetMask = new char[35];
 
         int onesCounter = 0;
         for (int i = 0; i < 35; ++i)
